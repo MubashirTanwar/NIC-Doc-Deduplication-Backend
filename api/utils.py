@@ -25,6 +25,17 @@ def extract_pages_from_pdf(pdf_document):
     return page_images
 
 def process_image(img_path, output_dir, page_num):
+    """
+    Process the given image by performing various image processing techniques to remove table borders and extract bounding boxes around the tables.
+    Parameters:
+    - img_path (str): The path to the input image file.
+    - output_dir (str): The directory where the processed image and bounding box image will be saved.
+    - page_num (int): The page number of the image.
+    Returns:
+    - filename (str): The path to the image file with bounding boxes.
+    Raises:
+    - FileNotFoundError: If the input image file is not found.
+    """
     
     img = cv2.imread(img_path)
 
@@ -155,6 +166,21 @@ def process_image(img_path, output_dir, page_num):
     return filename
 
 def search_and_save(es, index, doc_hash, file_path):
+    """
+    Searches for a document with the given doc_hash in the specified index.
+    If the document exists, returns True and the location of the document.
+    If the document does not exist, saves the document with the given doc_hash and file_path in the index.
+    
+    Parameters:
+    - es: Elasticsearch client object
+    - index: Index name where the document is stored
+    - doc_hash: Hash value of the document to search for or save
+    - file_path: File path of the document to save
+    
+    Returns:
+    - If the document exists, returns a tuple (True, location) where location is the file path of the existing document.
+    - If the document does not exist, returns the Elasticsearch response object and the file path of the saved document.
+    """
     response = document_exists(es, index, doc_hash)
     if response['hits']['total']['value'] > 0:
             return True, response['hits']['hits'][0]['_source']['location']
@@ -167,6 +193,13 @@ def search_and_save(es, index, doc_hash, file_path):
 
 
 def hash_pdf(file_path):
+            """
+            Hashes the text extracted from a PDF file using SHA-512 algorithm.
+            Parameters:
+            - file_path (str): The path of the PDF file.
+            Returns:
+            - hex_dig (str): The hexadecimal representation of the hashed text.
+            """
             images = convert_from_path(file_path)
             text = ""
             for i in range(len(images)):
@@ -181,14 +214,35 @@ def hash_pdf(file_path):
             return hex_dig
 
 def next_id(elastic_search, index):
+            """
+            Generates the next ID for a document in the specified Elasticsearch index.
+
+            Parameters:
+            - elastic_search (Elasticsearch): The Elasticsearch client object.
+            - index (str): The name of the index.
+
+            Returns:
+            - str: The next ID for the document.
+            """
             # the total count of documents in the index
             count = elastic_search.count(index=index)['count']
             # Use the count + 1 as the next ID
             return str(count + 1)
 
-def document_exists(es,index,doc_hash):
-                # Define the search query
-                search_query = {"query": {"match": {"text": doc_hash}}}
-                # Perform the search
-                response = es.search(index=index, body=search_query)
-                return response
+def document_exists(es,index,doc_hash):  
+    
+    """
+        Check if a document exists in Elasticsearch.
+        Args:
+            es: Elasticsearch client object.
+            index: Name of the index to search in.
+            doc_hash: Hash value of the document to search for.
+        Returns:
+            The response from the Elasticsearch search operation.
+        """
+      
+               
+    search_query = {"query": {"match": {"text": doc_hash}}}
+               
+    response = es.search(index=index, body=search_query)
+    return response

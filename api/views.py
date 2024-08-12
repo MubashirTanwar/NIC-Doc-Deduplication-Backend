@@ -14,6 +14,14 @@ import hashlib
 pdfPath = ""
 
 class ProcessPDF(APIView):
+    """
+    API view for processing a PDF file.
+    This view accepts a PDF file and processes it by extracting pages and processing each page image.
+    Methods:
+        post(request, *args, **kwargs): Processes the PDF file and returns a response with the processed images.
+    Attributes:
+        parser_classes: A tuple of parser classes used for parsing the request data.
+    """
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request, *args, **kwargs):
@@ -51,6 +59,20 @@ def extract_text_from_pdf(pdf_path):
 
 
 class ES(APIView):
+    """
+    Endpoint for uploading a PDF file and saving its hashed text in Elasticsearch.
+    Parameters:
+        request (HttpRequest): The HTTP request object.
+        args (tuple): Additional positional arguments.
+        kwargs (dict): Additional keyword arguments.
+    Returns:
+        Response: The HTTP response containing a JSON object with the following keys:
+            - message (str): A message indicating the result of the operation.
+            - location (str): The location of the saved document.
+            - status (int): The HTTP status code.
+    Example:
+        >>> response = ES().post(request)
+    """
     parser_classes = (MultiPartParser, FormParser)
     def post(self, request, *args, **kwargs):
         pdf_file = request.FILES['pdf']
