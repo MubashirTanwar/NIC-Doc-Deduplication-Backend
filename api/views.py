@@ -26,6 +26,13 @@ class ProcessPDF(APIView):
 
     def post(self, request, *args, **kwargs):
         pdf_file = request.FILES['pdf']
+        if pdf_file.name.endswith('.pdf') is False:
+            return Response({'error': 'Invalid file format. Please upload a PDF file.'})
+        # Check all edge cases: file size, mime type, secret key, password locked
+        if pdf_file.size > 10000000:
+            return Response({'error': 'File size too large. Please upload a file smaller than 10MB.'})
+        if pdf_file.content_type != 'application/pdf':
+            return Response({'error': 'Invalid file format. Please upload a PDF file.'})
         pdf_file_path = f'media/temp_images/{pdf_file.name}'
         with open(pdf_file_path, 'wb') as f:
             f.write(pdf_file.read())
@@ -56,6 +63,7 @@ def extract_text_from_pdf(pdf_path):
                     for i in range(len(images)):
                         text += pytesseract.image_to_string(images[i], lang='mar')
                     return text
+
 
 
 class ES(APIView):
