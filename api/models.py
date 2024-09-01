@@ -15,7 +15,7 @@ class ExtractedText(models.Model):
 
 class AuthToken(models.Model):
     key = models.CharField(max_length=40, primary_key=True)
-    user = models.CharField(max_length=255)                                         # TODO: This should be a foreign key to the User model
+    user = models.ForeignKey('Users', on_delete=models.CASCADE)                      # TODO: This should be a foreign key to the User model
     created = models.DateTimeField(auto_now_add=True)
 
 class Logs(models.Model):
@@ -26,4 +26,15 @@ class Logs(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.action} - {self.ip_address} - {self.created}"
-    
+
+
+class Users(models.Model):
+    username = models.CharField(max_length=255)
+    organization = models.CharField(max_length=255)
+    secret_key = models.CharField(max_length=255)
+    email = models.EmailField(max_length=255)
+    created = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.username} - {self.email} - {self.created}" 

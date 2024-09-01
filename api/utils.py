@@ -203,7 +203,7 @@ def hash_pdf(file_path):
             images = convert_from_path(file_path)
             text = ""
             for i in range(len(images)):
-                text += pytesseract.image_to_string(images[i], lang='mar')
+                text += pytesseract.image_to_string(images[i])
             # print("Extracted Text: ", text)
 
             #Hash the extracted text using SHA-512
