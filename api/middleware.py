@@ -31,21 +31,24 @@ class ErrorLoggingMiddleware(MiddlewareMixin):
     Usage:
         Add this middleware class to the Django middleware stack to enable error logging.
     """
-    def process_exception(self, request, exception):
-        error_message = {
-            'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'path': request.path,
-            'method': request.method,
-            'ip_address': request.META.get('REMOTE_ADDR', 'Unknown'),
-            'user_agent': request.META.get('HTTP_USER_AGENT', 'Unknown'),
-            'exception': str(exception),
-            'traceback': traceback.format_exc(),
-        }
-        logger.error(error_message)
-        return None
+    # def process_exception(self, request, exception):
+    #     error_message = {
+    #         'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+    #         'path': request.path,
+    #         'method': request.method,
+    #         'ip_address': request.META.get('REMOTE_ADDR', 'Unknown'),
+    #         'user_agent': request.META.get('HTTP_USER_AGENT', 'Unknown'),
+    #         'exception': str(exception),
+    #         'traceback': traceback.format_exc(),
+    #         'response': 'Exception occurred' + str(exception),
+    #     }
+    #     logger.error(error_message)
+    #     return None
 
     def process_response(self, request, response):
+        print("Response: ", response)
         if 400 <= response.status_code < 600:  # Catch both client and server errors
+
             error_message = {
                 'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 'path': request.path,
@@ -55,6 +58,8 @@ class ErrorLoggingMiddleware(MiddlewareMixin):
                 'status_code': response.status_code,
                 'response': response.content.decode('utf-8') if response.streaming is False else 'Streaming content',
             }
+            print("Error Message: ", error_message)
+            print("End of Error Message")
             logger.error(error_message)
         return response
 
@@ -100,6 +105,10 @@ class BearerTokenMiddleware:
 
     def __call__(self, request):
         try:
+            # if url is /api/create_user then no need to check for token
+            print("Request Path: ", request.path)
+            if request.path == "/api/create_user" :
+                return self.get_response(request)
             if "HTTP_AUTHORIZATION" in request.META:
                 # you have 2 things to check here token and api key
                 auth_header = request.META["HTTP_AUTHORIZATION"]
@@ -146,9 +155,14 @@ class BearerTokenMiddleware:
                     log = self.addLogInDB(request, user)
                     print("Log: ", log)
                     request.user = user
+            else :
+                return JsonResponse({"error": "Authorization header is missing.",
+                                     'details': 'Please provide an authorization header.',
+                                     'code': 400
+                                     }, status=404)
         except Exception as e:
             return JsonResponse({"error": "An error occurred.",
-                                 'details': str(e),
+                                 'details': "An error occurred while processing the PDF.",
                                  'code': 500
                                  }, status=500)
         response = self.get_response(request)

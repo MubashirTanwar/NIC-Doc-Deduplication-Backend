@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate API Key</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+
+    <!-- Navbar -->
+    <nav class="bg-blue-500 p-4">
+        <div class="container mx-auto">
+            <h1 class="text-white text-2xl font-bold">API Key Generator</h1>
+        </div>
+    </nav>
+
+    <div class="container mx-auto mt-10">
+        <div class="max-w-md mx-auto bg-white p-8 shadow-md rounded-lg">
+            <h2 class="text-2xl font-bold mb-4 text-center text-pastel-green">Generate API Key</h2>
+            <form action="{% url 'apikey' %}" method="POST" class="space-y-6">
+                {% csrf_token %}
+                <div>
+                    <label for="token" class="block text-sm font-medium text-gray-700">Enter your Token</label>
+                    <input id="token" name="token" type="text" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-green">
+                </div>
+
+                <button type="submit" class="w-full py-2 bg-green-300 text-white font-bold rounded-lg hover:bg-green-600">
+                    Generate API Key
+                </button>
+            </form>
+        </div>
+            {% if apikey %}
+    <div class="container mx-auto mt-10 max-w-xl">
+        <div class="bg-white shadow-lg p-8 rounded-lg">
+            <h2 class="text-2xl text-pastel-green font-semibold mb-4">API Key Created Successfully!</h2>
+            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <h1 id="key">{{ apikey }}</h1>
+            </div>
+            <button type="button" class="w-full mt-2 py-2 bg-green-300 text-white font-bold rounded-lg hover:bg-green-600"
+                onclick="CTC()"
+            >
+                Copy To Clipboard
+            </button>
+    </div>
+{% endif %}
+<script>
+function CTC() {
+  var copyText = document.getElementById("key");
+  copyText = copyText.innerHTML
+  navigator.clipboard.writeText(copyText);
+}
+</script>
+</body>
+</html>

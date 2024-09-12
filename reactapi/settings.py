@@ -18,8 +18,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -61,16 +60,29 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'api.middleware.BearerTokenMiddleware',
+    # 'api.middleware.BearerTokenMiddleware',
     'api.middleware.ErrorLoggingMiddleware'
 ]
 
 ROOT_URLCONF = 'reactapi.urls'
+REST_FRAMEWORK = {
+    'DEFAULT_THROTTLE_CLASSES': [
+        'api.throttles.CustomUserRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+
+    ],
+
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '2/min',
+        'user': '4/min'
+    }
+
+}
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [ os.path.join(BASE_DIR, 'templates').replace('\\', '/')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -88,20 +100,6 @@ WSGI_APPLICATION = 'reactapi.wsgi.application'
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'handlers': {
-        'file': {
-            'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            'filename': 'error_logs.log',
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['file'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-    },
 }
 
 # Database

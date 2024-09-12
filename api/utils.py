@@ -8,20 +8,40 @@ import pytesseract
 from pdf2image import convert_from_path
 from elasticsearch import Elasticsearch
 import hashlib
+from django.http import JsonResponse
+
 temp_dir = 'media/temp_images'
 output_dir = 'media/output_images'
 pytesseract.pytesseract.tesseract_cmd = (r"C:\Program Files\Tesseract-OCR\tesseract.exe")
 
 def extract_pages_from_pdf(pdf_document):
     page_images = []
-    for page_num in range(pdf_document.page_count):
-        page = pdf_document[page_num]
-        img = page.get_pixmap(matrix=fitz.Matrix(3, 3))
-        img_array = np.frombuffer(img.samples, dtype=np.uint8).reshape((img.h, img.w, 3))
-        page_image_path = os.path.join(temp_dir, f'page_{page_num + 1}.png')
-        cv2.imwrite(page_image_path, cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR))
-        page_images.append(page_image_path)
-    pdf_document.close()
+    try:
+        for page_num in range(pdf_document.page_count):
+            try:
+                page = pdf_document[page_num]
+                img = page.get_pixmap(matrix=fitz.Matrix(3, 3))
+                img_array = np.frombuffer(img.samples, dtype=np.uint8).reshape((img.h, img.w, 3))
+                page_image_path = os.path.join(temp_dir, f'page_{page_num + 1}.png')
+                cv2.imwrite(page_image_path, cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR))
+                page_images.append(page_image_path)
+            except Exception as e:
+                return JsonResponse(
+                    {
+                        "error": "An error occurred.",
+                        'details': f"An error occurred while extracting page {page_num + 1} from the PDF.",
+                        'code': 500
+                    }
+                )
+        pdf_document.close()
+    except Exception as e:
+        return JsonResponse(
+             {
+                "error": "An error occurred.",
+                'details': "An error occurred while extracting pages from the PDF.",
+                'code': 500
+             }
+        )
     return page_images
 
 def process_image(img_path, output_dir, page_num):
@@ -200,10 +220,28 @@ def hash_pdf(file_path):
             Returns:
             - hex_dig (str): The hexadecimal representation of the hashed text.
             """
-            images = convert_from_path(file_path)
+            try:
+                images = convert_from_path(file_path)
+            except Exception as e:
+                return JsonResponse(
+                    {
+                        "error": "An error occurred.",
+                        'details': "An error occurred while converting the PDF to images.",
+                        'code': 500
+                    }
+                )
             text = ""
             for i in range(len(images)):
-                text += pytesseract.image_to_string(images[i])
+                try:
+                    text += pytesseract.image_to_string(images[i])
+                except Exception as e:
+                    return JsonResponse(
+                        {
+                            "error": "An error occurred.",
+                            'details': f"An error occurred while extracting text from page {i + 1} of the PDF.",
+                            'code': 500
+                        }
+                    )
             # print("Extracted Text: ", text)
 
             #Hash the extracted text using SHA-512
@@ -243,6 +281,14 @@ def document_exists(es,index,doc_hash):
       
                
     search_query = {"query": {"match": {"text": doc_hash}}}
-               
-    response = es.search(index=index, body=search_query)
+    try:
+        response = es.search(index=index, body=search_query)
+    except Exception as e:
+        return JsonResponse(
+            {
+                "error": "An error occurred.",
+                'details': "An error occurred while searching for the document in Elasticsearch.",
+                'code': 500
+            }
+        )
     return response

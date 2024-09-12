@@ -27,7 +27,7 @@ def connect_db():
 def user_exists(conn, token):
     """Check if a user exists in the database with the provided token."""
     with conn.cursor() as cursor:
-        query = sql.SQL("SELECT id FROM api_user WHERE secret_key = %s")
+        query = sql.SQL("SELECT id FROM api_users WHERE secret_key = %s")
         cursor.execute(query, [token])
         result = cursor.fetchone()
         return result[0] if result else None

@@ -35,7 +35,7 @@ def save_user(conn, username, organization, email, secret_key):
     """Save the user details in the users table."""
     with conn.cursor() as cursor:
         insert_query = sql.SQL("""
-            INSERT INTO api_user (username, organization, email, secret_key, created)
+            INSERT INTO api_users (username, organization, email, secret_key, created)
             VALUES (%s, %s, %s, %s, %s)
         """)
         cursor.execute(insert_query, (username, organization, email, secret_key, datetime.now()))
