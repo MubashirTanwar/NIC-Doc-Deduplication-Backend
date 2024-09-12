@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.http import JsonResponse
@@ -16,7 +16,6 @@ from django.views import View
 from django.utils import timezone
 from django.contrib import messages
 from django.conf import settings
-
 
 
 pdfPath = ""
@@ -287,67 +286,44 @@ class CreateApiKey(View):
             
 
 
+#  View to get all users and edit / delete them 
 
 
-# def generate_api_key(length=40):
-#     """Generate a random alphanumeric API key."""
-#     characters = string.ascii_letters + string.digits
-#     return ''.join(random.choice(characters) for _ in range(length))
+def user_list(request):
+    users = Users.objects.all()
+    tokens = AuthToken.objects.all()
+    context = {
+        'users': users,
+        'tokens': tokens,
+        'total': len(users),
+        'active': len([user for user in users if user.is_active]),
+    }
+    return render(request, 'user_list.html', context)
 
-# def connect_db():
-#     """Connect to the PostgreSQL database."""
-#     conn = psycopg2.connect(
-#         dbname= os.getenv("NAME"),
-#         user= os.getenv("USER"),
-#         password= os.getenv("PASSWORD"),
-#         host= os.getenv("HOST"),
-#         port= os.getenv("PORT")
-#     )
-#     return conn
-
-# def user_exists(conn, token):
-#     """Check if a user exists in the database with the provided token."""
-#     with conn.cursor() as cursor:
-#         query = sql.SQL("SELECT id FROM api_users WHERE secret_key = %s")
-#         cursor.execute(query, [token])
-#         result = cursor.fetchone()
-#         return result[0] if result else None
-
-# def save_auth_token(conn, api_key, user_id):
-#     """Save the API key in the AuthToken table."""
-#     with conn.cursor() as cursor:
-#         insert_query = sql.SQL("""
-#             INSERT INTO api_authtoken (key, user_id, created)
-#             VALUES (%s, %s, %s)
-#         """)
-#         cursor.execute(insert_query, (api_key, user_id, datetime.now()))
-#         conn.commit()
-
-# def create_auth_token():
-#     """Check user via token, generate API key, and save it."""
-#     # Prompt user for token
-#     token = input("Enter your token: ")
+# View for editing a user
+def edit_user(request, user_id):
+    user = get_object_or_404(Users, id=user_id)
     
-#     # Connect to the PostgreSQL database
-#     conn = connect_db()
-    
-#     # Check if user exists
-#     user_id = user_exists(conn, token)
-#     if not user_id:
-#         print("User with the provided token does not exist.")
-#         conn.close()
-#         return
-    
-#     # Generate a 40-character alphanumeric API key
-#     api_key = generate_api_key()
-    
-#     # Save the API key in the database
-#     save_auth_token(conn, api_key, user_id)
-    
-#     # Close the database connection
-#     conn.close()
-    
-#     print(f"API Key generated and saved successfully: {api_key}")
+    if request.method == 'POST':
+        # Handle form submission for updating the user here
+        user.username = request.POST.get('username')
+        user.organization = request.POST.get('organization')
+        user.email = request.POST.get('email')
+        user.is_active = request.POST.get('is_active') == 'on'
+        user.save()
+        return redirect('user_list')
 
-# if __name__ == "__main__":
-#     create_auth_token()
+    return render(request, 'edit_user.html', {'user': user})
+
+# View for deleting a user
+def delete_user(request, user_id):
+    user = get_object_or_404(Users, id=user_id)
+    user.delete()
+    return redirect('user_list')
+
+# View for toggling active state
+def toggle_active(request, user_id):
+    user = get_object_or_404(Users, id=user_id)
+    user.is_active = not user.is_active
+    user.save()
+    return redirect('user_list')
